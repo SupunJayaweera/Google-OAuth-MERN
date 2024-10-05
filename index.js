@@ -12,7 +12,7 @@ const port = 4000;
 passport.use(
   new GoogleStrategy(
     {
-      clientID: Process.env.GOOGLE_CLIENT_ID,
+      clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: "http://localhost:4000/auth/google/callback",
     },
@@ -32,8 +32,56 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
+//setup  the session middleware
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: true,
+    saveUninitialized: true,
+    cookie: { maxAge: 1000 * 60 * 60 },
+  })
+);
+
+//Setup passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
+});
+
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile"] })
+);
+
+//callback route for google to redirect to
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/" }),
+  (req, res) => {
+    res.redirect("/profile");
+  }
+);
+
+// display the user profile
+app.get("/profile", (req, res) => {
+  if (req.isAutheticated()) {
+    res.send(
+      `<h1>You are Logged In!</h1><span>${JSON.stringify(
+        req.user,
+        null,
+        2
+      )}</span>`
+    );
+  } else {
+    res.redirect("/");
+  }
+});
+
+app.get("/logout", (req, res) => {
+  req.logout();
+  res.redirect("/");
 });
 
 app.listen(port, () => {
