@@ -18,6 +18,7 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       // method to create or authenticate use in our db
+      return done(null, profile);
     }
   )
 );
@@ -66,7 +67,7 @@ app.get(
 
 // display the user profile
 app.get("/profile", (req, res) => {
-  if (req.isAutheticated()) {
+  if (req.isAuthenticated()) {
     res.send(
       `<h1>You are Logged In!</h1><span>${JSON.stringify(
         req.user,
