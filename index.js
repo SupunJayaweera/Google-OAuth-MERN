@@ -3,6 +3,7 @@ import debug from "debug";
 import passport from "passport";
 import session from "express-session";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import { ping, getUserById, createUser } from "./databse.js";
 
 const debugServer = debug("app:sever");
 const app = express();
@@ -18,6 +19,11 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       // method to create or authenticate use in our db
+      if (await getUserById(profile.id)) {
+        debugServer("User already exists in DB");
+      } else {
+        createUser(profile);
+      }
       return done(null, profile);
     }
   )
@@ -81,7 +87,11 @@ app.get("/profile", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-  req.logout();
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+  });
   res.redirect("/");
 });
 
