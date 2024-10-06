@@ -67,7 +67,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   (req, res) => {
-    res.redirect("/profile");
+    res.redirect("http://localhost:3000/api/profile");
   }
 );
 
@@ -93,6 +93,23 @@ app.get("/logout", (req, res) => {
     }
   });
   res.redirect("/");
+});
+
+// Serve the user profile for the frontend
+app.get("/api/profile", (req, res) => {
+  if (req.isAuthenticated()) {
+    res.json(req.user);
+  } else {
+    res.status(401).json({ error: "User is not authenticated" });
+  }
+});
+
+// Handle logout and clear session
+app.get("/api/logout", (req, res, next) => {
+  req.logout((err) => {
+    if (err) return next(err);
+    res.json({ message: "Logged out successfully" });
+  });
 });
 
 app.listen(port, () => {
